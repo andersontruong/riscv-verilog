@@ -3,8 +3,8 @@ import Types::*;
 module tb_DECODE;
 
     logic clk = 0;
-    word instA, instB;
-    decode_struct decodeA, decodeB;
+    word insts [0:1];
+    decode_struct decode_data [0:1];
 
     always begin
         #1 clk <= ~clk;
@@ -13,16 +13,13 @@ module tb_DECODE;
     INSTRUCTION_ROM inst_rom(
         .i_clk(clk),
         .i_en(1'b1),
-        .o_instA(instA),
-        .o_instB(instB)
+        .o_insts(insts)
     );
 
     DECODE decode(
         .i_clk(clk),
-        .i_instA(instA),
-        .i_instB(instB),
-        .o_decode_dataA(decodeA),
-        .o_decode_dataB(decodeB)
+        .i_insts(insts),
+        .o_decode_data(decode_data)
     );
     
 
