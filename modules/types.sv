@@ -64,4 +64,8 @@ package Types;
         // ROB has 16 rows (can change to have more if needed)
         logic [3:0] ROBNumber;
     } rs_row_struct;
+    typedef struct {
+        // TODO
+        logic temp;
+    } complete_stage_struct;
 endpackage: Types
