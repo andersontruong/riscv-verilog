@@ -41,4 +41,27 @@ package Types;
         logic MemWrite;
         logic MemtoReg;
     } rename_struct;
+    typedef struct {
+        logic valid;
+        p_reg PRegAddrDst;
+        p_reg OldPRegAddrDst;
+        logic complete;
+    } rob_row_struct;
+    typedef struct {
+        logic use;
+        logic [2:0] ALUOp;
+        p_reg PRegAddrDst;
+        p_reg PRegAddrSrc0;
+        logic Src0Ready;
+        p_reg PRegAddrSrc1;
+        logic Src1Ready;
+        word immediate;
+        // 2 bits for 3 functional units
+        // 00 FU1
+        // 01 FU2
+        // 10 FU3 (mem only)
+        logic [1:0] fu;
+        // ROB has 16 rows (can change to have more if needed)
+        logic [3:0] ROBNumber;
+    } rs_row_struct;
 endpackage: Types
