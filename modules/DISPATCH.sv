@@ -2,46 +2,142 @@ import Types::*;
 
 module DISPATCH(
     input  logic i_clk,
-    input rename_struct i_rename_data [0:1],
-    output rob_row_struct o_rob_rows [0:1], // up to 2 new rows to add to ROB
-    output rs_row_struct o_rs_rows [0:1] // up to 2 new rows to add to reservation station
+    input  rename_struct i_rename_data [0:1],
+
+    input  word  i_r_reg_data [0:3],
+    output p_reg o_r_reg_addr [0:3],
+
+    input  logic i_free_fu [0:2],
+    output logic o_free_fu [0:2],
+
+    output rs_row_struct rows [0:15],
+    output rs_row_struct o_issue_inst [0:2]
+
+    // output rob_row_struct o_rob_rows [0:1], // up to 2 new rows to add to ROB
 );
+    logic fu_counter = 0;
+    logic free_p_regs [0:127];
+    // rs_row_struct rows [0:15];
 
-    always @(posedge i_clk) begin
-
-        // prepare rows to add to ROB (make ROB in later module)
-        foreach (o_rob_rows[i]) begin
-            o_rob_rows[i].valid <= 1;
-            o_rob_rows[i].PRegAddrDst <= i_rename_data[i].PRegAddrDst;
-            o_rob_rows[i].OldPRegAddrDst <= i_rename_data[i].OldPRegAddrDst;
-            o_rob_rows[i].complete <= 0;
+    // Request Register Data
+    always_comb begin
+        foreach(i_rename_data[i]) begin
+            o_r_reg_addr[2*i] <= i_rename_data[i].PRegAddrSrc0;
+            o_r_reg_addr[2*i + 1] <= i_rename_data[i].PRegAddrSrc1;
         end
+    end
 
-        // prepare rows to add to reservation station (make RS in later module)
-        foreach (o_rs_rows[i]) begin
-            o_rs_rows[i].use <= 1;
-            o_rs_rows[i].ALUOp <= i_rename_data[i].ALUOp;
-            o_rs_rows[i].PRegAddrDst <= i_rename_data[i].PRegAddrDst;
-            o_rs_rows[i].PRegAddrSrc0 <= i_rename_data[i].PRegAddrSrc0;
-            o_rs_rows[i].Src0Ready <= 0; // TODO --> do this in RS (check rest of entries in RS)
-            o_rs_rows[i].PRegAddrSrc1 <= i_rename_data[i].PRegAddrSrc1;
-            o_rs_rows[i].Src1Ready <= 0; // TODO --> do this in RS (check rest of entries in RS)
-            o_rs_rows[i].immediate <= i_rename_data[i].immediate;
-
-            // LW instruction
-            if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 0)
-                && (i_rename_data[i].MemRead == 0) && (i_rename_data[i].MemWrite == 1) && (i_rename_data[i].MemtoReg == 0))
-                o_rs_rows[i].fu <= 2'b10;
-            // SW instruction
-            else if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 1)
-                && (i_rename_data[i].MemRead == 1) && (i_rename_data[i].MemWrite == 0) && (i_rename_data[i].MemtoReg == 0))
-                o_rs_rows[i].fu <= 2'b10;
-            else
-                o_rs_rows[i].fu <= 0; // TODO: this makes the default FU the first one (just as a placeholder), need to add a variable or smthn to determine which FU is free
-            
-            o_rs_rows[i].ROBNumber <= 0; // TODO --> do this in ROB
+    initial begin
+        foreach (free_p_regs[i]) begin
+            free_p_regs[i] = 1'b1;
         end
+        foreach (rows[i])
+            rows[i].in_use <= 0;
 
+        foreach(o_free_fu[i])
+            o_free_fu[i] <= 1;
+    end
+    
+    always_ff @(posedge i_clk) begin
+        foreach (o_free_fu[i])
+            o_free_fu[i] <= i_free_fu[i];
+
+        // Issue instruction
+        foreach (o_issue_inst[i]) begin
+            for (int j = 0; j < 16; j++) begin
+                if (rows[j].in_use && rows[j].Src0Ready && rows[j].Src1Ready && i_free_fu[rows[j].fu]) begin
+                    // $display("Issued %d to DST %d", i, rows[j].PRegAddrDst);
+                    $display("ISSUE Issue %d:", i);
+                    $display("\tSrc0: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc0, rows[j].Src0Ready, rows[j].src0);
+                    $display("\tSrc1: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc1, rows[j].Src1Ready, rows[j].src1);
+                    $display("\tImmediate: %d", rows[j].immediate);
+                    $display("\tDst:  %d", rows[j].PRegAddrDst);
+                    $display("\t\tOldDst:  %d", rows[j].OldPRegAddrDst);
+                    rows[j].in_use = 1'b0;
+
+                    o_issue_inst[i] = rows[j];
+                    o_free_fu[rows[j].fu] = 0;
+                    free_p_regs[rows[j].PRegAddrDst] = 0;
+                    // $display("\tFinished Issued %d to DST %d, in-use at %d? %d", i, rows[j].PRegAddrDst, j, rows[j].in_use);
+                    break;
+                end
+                if (j == 15) begin
+                    o_issue_inst[i] = '{
+                        in_use: 0,
+                        PRegAddrDst: 0,
+                        OldPRegAddrDst: 0,
+                        PRegAddrSrc0: 0,
+                        Src0Ready: 0,
+                        src0: 0,
+                        PRegAddrSrc1: 0,
+                        Src1Ready: 0,
+                        src1: 0,
+                        immediate: 0,
+                        ALUOp: 0,
+                        ALUSrc: 0,
+                        RegWrite: 0,
+                        MemRead: 0,
+                        MemWrite: 0,
+                        MemtoReg: 0,
+                        fu: 0,
+                        ROBNumber: 0
+                    };
+                end
+            end
+        end
+    end
+
+    always_ff @(posedge i_clk) begin
+        foreach (i_rename_data[i]) begin
+            if (^i_rename_data[i].PRegAddrSrc0 !== 1'bX && ^i_rename_data[i].PRegAddrSrc1 !== 1'bX) begin
+                for (int j = 0; j < 16; j++) begin
+                    if (!rows[j].in_use) begin
+                        $display("DISPATCH Issue %d:", i);
+                        $display("\tSrc0: %d\n\t\tR? %d\n\t\t\tData: %8x", i_rename_data[i].PRegAddrSrc0, free_p_regs[i_rename_data[i].PRegAddrSrc0], i_r_reg_data[2*i]);
+                        $display("\tSrc1: %d\n\t\tR? %d\n\t\t\tData: %8x", i_rename_data[i].PRegAddrSrc1, free_p_regs[i_rename_data[i].PRegAddrSrc1], i_r_reg_data[2*i + 1]);
+                        $display("\tImmediate: %d", i_rename_data[i].immediate);
+                        $display("\tDst:  %d", i_rename_data[i].PRegAddrDst);
+                        $display("\t\tOldDst:  %d", i_rename_data[i].OldPRegAddrDst);
+
+                        // $display("%d, Reserved at %d to DST %d", i, j, i_rename_data[i].PRegAddrDst);
+                        rows[j].in_use = 1;
+                        rows[j].PRegAddrDst <= i_rename_data[i].PRegAddrDst;
+                        rows[j].OldPRegAddrDst <= i_rename_data[i].OldPRegAddrDst;
+
+                        rows[j].PRegAddrSrc0 <= i_rename_data[i].PRegAddrSrc0;
+                        rows[j].Src0Ready <= free_p_regs[i_rename_data[i].PRegAddrSrc0];
+                        rows[j].src0 <= i_r_reg_data[2*i];
+
+                        rows[j].PRegAddrSrc1 <= i_rename_data[i].PRegAddrSrc1;
+                        rows[j].Src1Ready <= free_p_regs[i_rename_data[i].PRegAddrSrc1];
+                        rows[j].src1 <= i_r_reg_data[2*i + 1];
+
+                        rows[j].immediate <= i_rename_data[i].immediate;
+
+                        rows[j].ALUOp    <= i_rename_data[i].ALUOp;
+                        rows[j].ALUSrc   <= i_rename_data[i].ALUSrc;
+                        rows[j].RegWrite <= i_rename_data[i].RegWrite;
+                        rows[j].MemRead  <= i_rename_data[i].MemRead;
+                        rows[j].MemWrite <= i_rename_data[i].MemWrite;
+                        rows[j].MemtoReg <= i_rename_data[i].MemtoReg;
+
+                        // LW
+                        if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 1)
+                            && (i_rename_data[i].MemRead == 1) && (i_rename_data[i].MemWrite == 0) && (i_rename_data[i].MemtoReg == 1))
+                            rows[j].fu <= 2'b10;
+                        // SW instruction
+                        else if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 0)
+                            && (i_rename_data[i].MemRead == 0) && (i_rename_data[i].MemWrite == 1) && (i_rename_data[i].MemtoReg == 0))
+                            rows[j].fu <= 2'b10;
+                        else begin
+                            rows[j].fu = fu_counter;
+                            fu_counter = fu_counter + 1;
+                        end
+                        break;
+                    end
+                end
+            end
+        end
     end
 
 endmodule : DISPATCH

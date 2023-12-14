@@ -16,6 +16,15 @@ module RISCV(
         .i_clk(clk),
         .i_instA(instA_buf),
         .i_instB(instB_buf)
+    );
+
+    memory_request mem_req;
+    memory_response mem_res;
+
+    memory mem(
+        .i_clk(clk),
+        .i_mem_req(mem_req),
+        .o_mem_res(mem_res)
     )
 
 endmodule : RISCV

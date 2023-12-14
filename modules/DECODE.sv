@@ -7,10 +7,16 @@ module DECODE(
 );
     always @(posedge i_clk) begin
         foreach (i_insts[i]) begin
+            $display("DECODE Issue %d:", i);
             case (i_insts[i][6:0])
                 // Handle R-type instruction
                 7'b0110011:
                     begin
+                        $display("\tSrc0: %d", i_insts[i][19:15]);
+                        $display("\tSrc1: %d", i_insts[i][24:20]);
+                        $display("\tImmediate:  %d", 0);
+                        $display("\tDst:  %d", i_insts[i][11:7]);
+                        
                         o_decode_data[i].ARegAddrSrc0 <= i_insts[i][19:15];
                         o_decode_data[i].ARegAddrSrc1 <= i_insts[i][24:20];
                         o_decode_data[i].ARegAddrDst  <= i_insts[i][11:7];
@@ -39,6 +45,12 @@ module DECODE(
                 // Handle I-type instruction (non-load)
                 7'b0010011:
                     begin
+                        $display("\tI-Type===");
+                        $display("\tSrc0: %d", i_insts[i][19:15]);
+                        $display("\tSrc1: %d", 0);
+                        $display("\tImmediate:  %d", i_insts[i][31:20]);
+                        $display("\tDst:  %d", i_insts[i][11:7]);
+                        
                         o_decode_data[i].ARegAddrSrc0 <= i_insts[i][19:15];
                         o_decode_data[i].ARegAddrSrc1 <= 0;
                         o_decode_data[i].ARegAddrDst  <= i_insts[i][11:7];
@@ -61,6 +73,12 @@ module DECODE(
                 // Handle LW instruction
                 7'b0000011:
                     begin
+                        $display("\tLW===");
+                        $display("\tSrc0: %d", i_insts[i][19:15]);
+                        $display("\tSrc1: %d", 0);
+                        $display("\tImmediate:  %d", i_insts[i][31:20]);
+                        $display("\tDst:  %d", i_insts[i][11:7]);
+
                         o_decode_data[i].ARegAddrSrc0 <= i_insts[i][19:15];
                         o_decode_data[i].ARegAddrSrc1 <= 0;
                         o_decode_data[i].ARegAddrDst  <= i_insts[i][11:7];
@@ -76,6 +94,12 @@ module DECODE(
                 // Handle SW instruction
                 7'b0100011:
                     begin
+                        $display("\tSW===");
+                        $display("\tSrc0: %d", i_insts[i][19:15]);
+                        $display("\tSrc1: %d", i_insts[i][24:20]);
+                        $display("\tImmediate:  %d", { i_insts[i][31:25], i_insts[i][11:7] });
+                        $display("\tDst:  %d", 0);
+                        
                         o_decode_data[i].ARegAddrSrc0 <= i_insts[i][19:15];
                         o_decode_data[i].ARegAddrSrc1 <= i_insts[i][24:20];
                         o_decode_data[i].ARegAddrDst  <= 0;
@@ -90,6 +114,11 @@ module DECODE(
 
                 default:
                     begin
+                        $display("\tNOP===");
+                        $display("\tSrc0: %d", 0);
+                        $display("\tSrc1: %d", 0);
+                        $display("\tImmediate:  %d", 0);
+                        $display("\tDst:  %d", 0);
                         o_decode_data[i].ARegAddrSrc0 <= 0;
                         o_decode_data[i].ARegAddrSrc1 <= 0;
                         o_decode_data[i].ARegAddrDst  <= 0;

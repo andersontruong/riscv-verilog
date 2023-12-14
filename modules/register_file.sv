@@ -1,22 +1,33 @@
 import Types::*;
 
 module register_file(
-    input logic clk,
-    input logic w_en,
-    input p_reg r_addr1, r_addr2, w_addr,
-    input word w_data,
-    output word r_data1, r_data2
+    input  logic i_clk,
+    input  p_reg i_r_addr [0:3],
+    input  logic i_w_en [0:1],
+    input  p_reg i_w_addr [0:1],
+    input  word  i_w_data [0:1],
+    output word  o_r_data [0:3]
 );
     word reg_array[0:127];
 
-    assign word[0] = 32'b0;
+    assign reg_array[0] = 32'b0;
 
-    assign r_data1 = reg_array[r_addr1];
-    assign r_data2 = reg_array[r_addr2];
+    initial begin
+        foreach(reg_array[i])
+            reg_array[i] <= i;
+    end
 
-    always @(posedge clk) begin
-        if (w_en)
-            reg_array[w_addr] = w_data;
+    always_comb begin
+        foreach (i_r_addr[i]) begin
+            o_r_data[i] <= reg_array[i_r_addr[i]];
+        end
+    end
+
+    always @(posedge i_clk) begin
+        foreach (i_w_addr[i]) begin
+            if (i_w_en[i])
+                reg_array[i_w_addr[i]] <= i_w_data[i];
+        end
     end
 
 endmodule: register_file
