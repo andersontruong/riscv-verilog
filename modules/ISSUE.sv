@@ -20,19 +20,23 @@ module ISSUE(
             if (alu_valid[i]) begin
                 o_complete_result[i].ready <= 1;
                 o_complete_result[i].FU_Result <= alu_result[i];
+                o_complete_result[i].fu <= i;
             end
             else begin
                 o_complete_result[i].ready <= 0;
                 o_complete_result[i].FU_Result <= 0;
+                o_complete_result[i].fu <= 'X;
             end
         end
         if (alu_valid[2] && ^i_r_mem_data !== 1'bX) begin
             o_complete_result[2].ready <= 1;
             o_complete_result[2].FU_Result <= i_r_mem_data;
+            o_complete_result[i].fu <= 2;
         end
         else begin
             o_complete_result[2].ready <= 0;
             o_complete_result[2].FU_Result <= 0;
+            o_complete_result[i].fu <= 'X;
         end
     end
 

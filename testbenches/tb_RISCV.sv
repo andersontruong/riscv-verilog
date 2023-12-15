@@ -65,6 +65,7 @@ module tb_RISCV;
     );
 
     rs_row_struct rows [0:15];
+    rob_row_struct rob_rows [0:1];
 
     DISPATCH dispatch(
         .i_clk(clk),
@@ -77,24 +78,33 @@ module tb_RISCV;
         .o_free_fu(o_free_fu),
         
         .rows(rows),
-        .o_issue_inst(issue_inst)
+        .o_issue_inst(issue_inst),
+        .o_rob_rows(rob_rows)
     );
 
-    word r_mem_data, r_mem_addr;
-    complete_stage_struct complete_result [0:2];
+    // word r_mem_data, r_mem_addr;
+    // complete_stage_struct complete_result [0:2];
 
-    memory mem(
-        .i_clk(clk),
-        .i_r_mem_addr(r_mem_addr),
-        .i_r_mem_data(r_mem_data)
-    );
+    // memory mem(
+    //     .i_clk(clk),
+    //     .i_r_mem_addr(r_mem_addr),
+    //     .i_r_mem_data(r_mem_data)
+    // );
 
-    ISSUE issue(
-        .i_clk(clk),
-        .i_issue_inst(issue_inst),
-        .i_r_mem_data(r_mem_data),
-        .i_r_mem_addr(r_mem_addr),
-        .o_complete_result(complete_result)
-    );
+    // ISSUE issue(
+    //     .i_clk(clk),
+    //     .i_issue_inst(issue_inst),
+    //     .i_r_mem_data(r_mem_data),
+    //     .i_r_mem_addr(r_mem_addr),
+    //     .o_complete_result(complete_result)
+    // );
+
+    // COMPLETE complete(
+    //     .i_clk(clk),
+    //     input  rob_row_struct i_rob_row [0:1],
+    //     input  complete_stage_struct i_complete_result [0:2],
+    //     output rob_row_struct o_retire_row [0:1],
+    //     output logic [0:1] fu_ready [0:2]
+    // );
 
 endmodule : tb_RISCV

@@ -11,12 +11,13 @@ module DISPATCH(
     output logic o_free_fu [0:2],
 
     output rs_row_struct rows [0:15],
-    output rs_row_struct o_issue_inst [0:2]
+    output rs_row_struct o_issue_inst [0:2],
 
-    // output rob_row_struct o_rob_rows [0:1], // up to 2 new rows to add to ROB
+    output rob_row_struct o_rob_rows [0:1] // up to 2 new rows to add to ROB
 );
     logic fu_counter = 0;
     logic free_p_regs [0:127];
+    logic [3:0] ROB_pointer = 0;
     // rs_row_struct rows [0:15];
 
     // Request Register Data
@@ -58,7 +59,19 @@ module DISPATCH(
                     o_issue_inst[i] = rows[j];
                     o_free_fu[rows[j].fu] = 0;
                     free_p_regs[rows[j].PRegAddrDst] = 0;
-                    // $display("\tFinished Issued %d to DST %d, in-use at %d? %d", i, rows[j].PRegAddrDst, j, rows[j].in_use);
+
+                    o_rob_rows[i] = '{
+                        ROBNumber: rows[j].ROBNumber,
+                        valid: 1,
+                        PRegAddrDst: rows[j].PRegAddrDst,
+                        OldPRegAddrDst: rows[j].OldPRegAddrDst,
+                        complete: 0,
+                        data: 0,
+                        RegWrite: rows[j].RegWrite,
+                        MemWrite: rows[j].MemWrite,
+                        MemtoReg: rows[j].MemtoReg
+                    };
+                    $display("\tFinished Issued %d to DST %d, in-use at %d? %d", i, rows[j].PRegAddrDst, j, rows[j].in_use);
                     break;
                 end
                 if (j == 15) begin
@@ -81,6 +94,17 @@ module DISPATCH(
                         MemtoReg: 0,
                         fu: 0,
                         ROBNumber: 0
+                    };
+                    o_rob_rows[i] = '{
+                        ROBNumber: 0,
+                        valid: 0,
+                        PRegAddrDst: 0,
+                        OldPRegAddrDst: 0,
+                        complete: 0,
+                        data: 0,
+                        RegWrite: 0,
+                        MemWrite: 0,
+                        MemtoReg: 0
                     };
                 end
             end
@@ -120,6 +144,9 @@ module DISPATCH(
                         rows[j].MemRead  <= i_rename_data[i].MemRead;
                         rows[j].MemWrite <= i_rename_data[i].MemWrite;
                         rows[j].MemtoReg <= i_rename_data[i].MemtoReg;
+                        rows[j].ROBNumber = ROB_pointer;
+
+                        ROB_pointer = ROB_pointer + 1;
 
                         // LW
                         if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 1)

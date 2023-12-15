@@ -1,3 +1,5 @@
+import Types::*;
+
 module memory(
     input  logic i_clk,
     input  word i_r_mem_addr,

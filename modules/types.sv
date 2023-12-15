@@ -58,10 +58,15 @@ package Types;
     } memory_response;
 
     typedef struct {
+        logic [3:0] ROBNumber;
         logic valid;
         p_reg PRegAddrDst;
         p_reg OldPRegAddrDst;
         logic complete;
+        word data;
+        logic RegWrite;
+        logic MemWrite;
+        logic MemtoReg;
     } rob_row_struct;
 
     typedef struct {
@@ -102,7 +107,9 @@ package Types;
         logic MemWrite;
         logic MemtoReg;
         logic ready;
-
+        logic [1:0] fu;
         word FU_Result;
     } complete_stage_struct;
+
+
 endpackage: Types
