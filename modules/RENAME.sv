@@ -3,7 +3,7 @@ import Types::*;
 module RENAME(
     input  logic i_clk,
     input  decode_struct i_decode_data [0:1],
-    input rob_row_struct i_complete_rob_rows [0:2],
+    input rob_row_struct i_complete_rob_row [0:2],
     output rename_struct o_rename_data [0:1]
 );
     // RAT
@@ -76,11 +76,11 @@ module RENAME(
 
     always @(posedge i_clk) begin
         // Free Retired Dst Registers
-        foreach (i_complete_rob_rows[i]) begin
-            if (i_complete_rob_rows[i].valid) begin
+        foreach (i_complete_rob_row[i]) begin
+            if (i_complete_rob_row[i].valid) begin
                 foreach (free_pool[j]) begin
                     // Free old register
-                    if (j == i_complete_rob_rows[i].OldPRegAddrDst) begin
+                    if (j == i_complete_rob_row[i].OldPRegAddrDst) begin
                         free_pool[j] <= 1'b1;
                         break;
                     end

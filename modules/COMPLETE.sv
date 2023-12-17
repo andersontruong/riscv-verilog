@@ -3,8 +3,7 @@ import Types::*;
 module COMPLETE(
     input  logic i_clk,
     input  rob_row_struct i_rob_row [0:1],
-    input  complete_stage_struct i_complete_result [0:2],
-    output rob_row_struct o_complete_rob_rows [0:2],
+    input  rob_row_struct i_complete_rob_row [0:2],
     output rob_row_struct o_retire_rob_rows [0:1]
 );
     // 16 ROB rows
@@ -28,20 +27,18 @@ module COMPLETE(
             end
         end
 
-        foreach(i_complete_result[i]) begin
-            if (i_complete_result[i].ready) begin
+        foreach(i_complete_rob_row[i]) begin
+            if (i_complete_rob_row[i].valid) begin
                 $display("COMPLETE Issue %d:", i);
-                $display("\tROB#:  %d", i_complete_result[i].ROBNumber);
-                $display("\tResult:  %d", i_complete_result[i].FU_Result);
+                $display("\tROB#:  %d", i_complete_rob_row[i].ROBNumber);
+                $display("\tResult:  %d", i_complete_rob_row[i].data);
 
-                rob_rows[i_complete_result[i].ROBNumber].complete <= 1;
-                rob_rows[i_complete_result[i].ROBNumber].data <= i_complete_result[i].FU_Result;
-                o_complete_rob_rows[i] <= rob_rows[i_complete_result[i].ROBNumber];
+                rob_rows[i_complete_rob_row[i].ROBNumber].complete <= 1;
+                rob_rows[i_complete_rob_row[i].ROBNumber].data <= i_complete_rob_row[i].data;
             end
             else begin
-                rob_rows[i_complete_result[i].ROBNumber].complete <= 0;
-                rob_rows[i_complete_result[i].ROBNumber].data <= 'X;
-                o_complete_rob_rows[i].valid <= 0;
+                rob_rows[i_complete_rob_row[i].ROBNumber].complete <= 0;
+                rob_rows[i_complete_rob_row[i].ROBNumber].data <= 'X;
             end
         end
 

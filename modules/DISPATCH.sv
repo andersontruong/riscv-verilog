@@ -10,7 +10,7 @@ module DISPATCH(
     input  logic i_free_fu [0:2],
     output logic o_free_fu [0:2],
 
-    input rob_row_struct i_complete_rob_rows [0:2],
+    input rob_row_struct i_complete_rob_row [0:2],
 
     // output rs_row_struct rows [0:15],
     output rs_row_struct o_issue_inst [0:2],
@@ -49,17 +49,17 @@ module DISPATCH(
 
     always_ff @(posedge i_clk) begin
         // Handle Retire Dependencies
-        foreach(i_complete_rob_rows[i]) begin
-            if (i_complete_rob_rows[i].valid) begin
-                free_p_regs[i_complete_rob_rows[i].PRegAddrDst] = 1;
+        foreach(i_complete_rob_row[i]) begin
+            if (i_complete_rob_row[i].valid) begin
+                free_p_regs[i_complete_rob_row[i].PRegAddrDst] = 1;
                 foreach(rows[j]) begin
-                    if (rows[j].PRegAddrSrc0 == i_complete_rob_rows[i].PRegAddrDst) begin
-                        rows[j].src0 = i_complete_rob_rows[i].data;
+                    if (rows[j].PRegAddrSrc0 == i_complete_rob_row[i].PRegAddrDst) begin
+                        rows[j].src0 = i_complete_rob_row[i].data;
                         rows[j].Src0Ready = 1;
                         
                     end
-                    if (rows[j].PRegAddrSrc1 == i_complete_rob_rows[i].PRegAddrDst) begin
-                        rows[j].src1 = i_complete_rob_rows[i].data;
+                    if (rows[j].PRegAddrSrc1 == i_complete_rob_row[i].PRegAddrDst) begin
+                        rows[j].src1 = i_complete_rob_row[i].data;
                         rows[j].Src1Ready = 1;
                     end
                 end

@@ -8,7 +8,6 @@ module tb_RISCV;
     word insts [0:1];
     decode_struct decode_data [0:1];
     rename_struct rename_data [0:1];
-    rob_row_struct complete_rob_rows [0:2];
 
     p_reg r_reg_addr [0:5];
     word  r_reg_data [0:5];
@@ -28,7 +27,7 @@ module tb_RISCV;
     word w_mem_addr [0:1];
     word w_mem_data [0:1];
     logic w_mem_en [0:1];
-    complete_stage_struct complete_result [0:2];
+    rob_row_struct complete_rob_row [0:2];
     rob_row_struct retire_rob_rows [0:1];
 
     initial begin
@@ -94,7 +93,7 @@ module tb_RISCV;
     RENAME rename(
         .i_clk(clk),
         .i_decode_data(decode_data),
-        .i_complete_rob_rows(complete_rob_rows),
+        .i_complete_rob_row(complete_rob_row),
         .o_rename_data(rename_data)
     );
 
@@ -117,7 +116,7 @@ module tb_RISCV;
         .i_free_fu(w_free_fu),
         .o_free_fu(dispatch_free_fu),
 
-        .i_complete_rob_rows(complete_rob_rows),
+        .i_complete_rob_row(complete_rob_row),
         
         .o_issue_inst(issue_inst),
         .o_rob_rows(dispatched_rob_rows)
@@ -137,15 +136,14 @@ module tb_RISCV;
         .i_issue_inst(issue_inst),
         .i_r_mem_data(r_mem_data),
         .i_r_mem_addr(r_mem_addr),
-        .o_complete_result(complete_result),
+        .o_complete_rob_row(complete_rob_row),
         .o_fu_ready(complete_free_fu)
     );
 
     COMPLETE complete(
         .i_clk(clk),
         .i_rob_row(dispatched_rob_rows),
-        .i_complete_result(complete_result),
-        .o_complete_rob_rows(complete_rob_rows),
+        .i_complete_rob_row(complete_rob_row),
         .o_retire_rob_rows(retire_rob_rows)
     );
 
