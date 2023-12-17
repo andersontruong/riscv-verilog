@@ -10,12 +10,9 @@ module DISPATCH(
     input  logic i_free_fu [0:2],
     output logic o_free_fu [0:2],
 
-    input rob_row_struct i_complete_rob_rows [0:2],
-
     input p_reg forward_issue_result_addr [0:2],
     input word  forward_issue_result_data [0:2],
 
-    output rs_row_struct rows [0:15],
     output rs_row_struct o_issue_inst [0:2],
 
     output rob_row_struct o_rob_rows [0:1] // up to 2 new rows to add to ROB
@@ -24,7 +21,7 @@ module DISPATCH(
     logic free_p_regs [0:127];
     logic [3:0] ROB_pointer = 0;
     logic [1:0] mem_issue_state = 0;
-    // rs_row_struct rows [0:15];
+    rs_row_struct rows [0:15];
 
     // Request Register Data
     always_comb begin
@@ -48,24 +45,6 @@ module DISPATCH(
     end
 
     always_ff @(posedge i_clk) begin
-        // Handle Retire Dependencies
-        foreach(i_complete_rob_rows[i]) begin
-            if (i_complete_rob_rows[i].valid) begin
-                free_p_regs[i_complete_rob_rows[i].PRegAddrDst] = 1;
-                foreach(rows[j]) begin
-                    if (rows[j].PRegAddrSrc0 == i_complete_rob_rows[i].PRegAddrDst) begin
-                        rows[j].src0 = i_complete_rob_rows[i].data;
-                        rows[j].Src0Ready = 1;
-                        
-                    end
-                    if (rows[j].PRegAddrSrc1 == i_complete_rob_rows[i].PRegAddrDst) begin
-                        rows[j].src1 = i_complete_rob_rows[i].data;
-                        rows[j].Src1Ready = 1;
-                    end
-                end
-            end
-        end
-
         // Dispatch
         foreach (i_rename_data[i]) begin
             if (^i_rename_data[i].PRegAddrSrc0 !== 1'bX && ^i_rename_data[i].PRegAddrSrc1 !== 1'bX && |i_rename_data[i].ALUOp) begin
@@ -146,6 +125,7 @@ module DISPATCH(
         foreach(forward_issue_result_addr[i]) begin
             if (^forward_issue_result_addr[i] !== 'X) begin
                 $display("FORWARD");
+                free_p_regs[forward_issue_result_addr[i]] = 1;
                 foreach(rows[j]) begin
                     if (rows[j].PRegAddrSrc0 == forward_issue_result_addr[i]) begin
                         rows[j].src0 = forward_issue_result_data[i];

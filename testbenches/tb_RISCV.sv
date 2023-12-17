@@ -109,7 +109,6 @@ module tb_RISCV;
 
     p_reg forward_issue_result_addr [0:2];
     word  forward_issue_result_data [0:2];
-    rs_row_struct rows [0:15];
 
     DISPATCH dispatch(
         .i_clk(clk),
@@ -121,11 +120,9 @@ module tb_RISCV;
         .i_free_fu(w_free_fu),
         .o_free_fu(dispatch_free_fu),
 
-        .i_complete_rob_rows(complete_rob_rows),
         .forward_issue_result_addr(forward_issue_result_addr),
         .forward_issue_result_data(forward_issue_result_data),
         
-        .rows(rows),
         .o_issue_inst(issue_inst),
         .o_rob_rows(dispatched_rob_rows)
     );
