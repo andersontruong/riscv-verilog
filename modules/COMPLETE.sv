@@ -42,6 +42,7 @@ module COMPLETE(
         foreach (i_rob_row[i]) begin
             $display("TRY ROB ISSUE %d: at %d; valid i=%d, valid spot=", i, i_rob_row[i].ROBNumber, i_rob_row[i].valid, rob_rows[i_rob_row[i].ROBNumber].valid);
             if (i_rob_row[i].valid && !rob_rows[i_rob_row[i].ROBNumber].valid) begin
+                
                 $display("ROB Issue %d: at %d", i, i_rob_row[i].ROBNumber);
                 rob_rows[i_rob_row[i].ROBNumber] <= i_rob_row[i];
             end
@@ -50,14 +51,14 @@ module COMPLETE(
         foreach (o_retire_rob_rows[i]) begin
             if (rob_rows[ROB_pointer].complete) begin
                 $display("RETIRE Issue %d:", i);
-                $display("\tROB#:  %d", ROB_pointer);
+                $display("\tROB#:  %d", rob_rows[ROB_pointer].ROBNumber);
                 o_retire_rob_rows[i] = rob_rows[ROB_pointer];
                 rob_rows[ROB_pointer].valid = 0;
                 ROB_pointer = ROB_pointer + 1;
                 $display("\tNew ROB#:  %d", ROB_pointer);
             end
             else begin
-                o_retire_rob_rows[i] <= '{
+                o_retire_rob_rows[i] = '{
                     valid: 'X,
                     PRegAddrDst: 'X,
                     OldPRegAddrDst: 'X,

@@ -31,7 +31,7 @@ module memory(
         };
 
         foreach (i_w_mem_addr[i]) begin
-            if (i_w_mem_en[i]) begin
+            if (i_w_mem_en[i] && ^i_w_mem_addr[i] !== 'X) begin
                 $display("MEMORY WRITE: WORD %8x to ADDR %d", i_w_mem_data[i], i_w_mem_addr[i]);
                 memory[i_w_mem_addr[i][7:0]] <= i_w_mem_data[i][31:24];
                 memory[i_w_mem_addr[i][7:0] + 1] <= i_w_mem_data[i][23:16];

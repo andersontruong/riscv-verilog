@@ -15,7 +15,7 @@ module DISPATCH(
     input p_reg forward_issue_result_addr [0:2],
     input word  forward_issue_result_data [0:2],
 
-    // output rs_row_struct rows [0:15],
+    output rs_row_struct rows [0:15],
     output rs_row_struct o_issue_inst [0:2],
 
     output rob_row_struct o_rob_rows [0:1] // up to 2 new rows to add to ROB
@@ -24,7 +24,7 @@ module DISPATCH(
     logic free_p_regs [0:127];
     logic [3:0] ROB_pointer = 0;
     logic [1:0] mem_issue_state = 0;
-    rs_row_struct rows [0:15];
+    // rs_row_struct rows [0:15];
 
     // Request Register Data
     always_comb begin
@@ -130,7 +130,7 @@ module DISPATCH(
                 end
             end
             else begin
-                o_rob_rows[i] = '{
+                o_rob_rows[i] <= '{
                     ROBNumber: 'X,
                     valid: 0,
                     PRegAddrDst: 0,

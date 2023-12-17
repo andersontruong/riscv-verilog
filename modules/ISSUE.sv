@@ -34,7 +34,7 @@ module ISSUE(
         end
         if (alu_valid[2] && ^alu_valid[2] !== 1'bX && ^i_r_mem_data !== 1'bX) begin
             forward_issue_result_addr[2] <= i_issue_inst[2].PRegAddrDst;
-            forward_issue_result_data[2] <= alu_result[2];
+            forward_issue_result_data[2] <= i_r_mem_data;
             o_fu_ready[2] <= 1;
         end
         else begin

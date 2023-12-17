@@ -18,11 +18,11 @@ module RENAME(
     // Pull from free pool 2 dst registers
     initial begin
         foreach (free_pool[i]) begin
-            if (i < 32) free_pool[i] <= 1'b0;
-            else free_pool[i] <= 1'b1;
+            if (i < 32) free_pool[i] = 1'b0;
+            else free_pool[i] = 1'b1;
         end
         foreach (physical_reg[i]) begin
-            physical_reg[i] <= i;
+            physical_reg[i] = i;
         end
     end
 
@@ -58,7 +58,7 @@ module RENAME(
                         free_pool[j] = 0;
                         o_rename_data[i].PRegAddrDst <= j;
                         o_rename_data[i].OldPRegAddrDst <= physical_reg[i_decode_data[i].ARegAddrDst];
-                        physical_reg[i_decode_data[i].ARegAddrDst] <= j;
+                        physical_reg[i_decode_data[i].ARegAddrDst] = j;
                         
                         break;
                     end
@@ -80,8 +80,8 @@ module RENAME(
             if (i_complete_rob_rows[i].valid) begin
                 foreach (free_pool[j]) begin
                     // Free old register
-                    if (j == i_complete_rob_rows[i].OldPRegAddrDst) begin
-                        free_pool[j] <= 1'b1;
+                    if (j == i_complete_rob_rows[i].OldPRegAddrDst && |i_complete_rob_rows[i].OldPRegAddrDst) begin
+                        free_pool[j] = 1'b1;
                         break;
                     end
                 end
