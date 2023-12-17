@@ -6,7 +6,8 @@ module ISSUE(
     input  word i_r_mem_data,
     output word i_r_mem_addr,
     output logic o_fu_ready [0:2],
-    output complete_stage_struct o_complete_result [0:2]
+    output complete_stage_struct o_complete_result [0:2],
+    output rob_row_struct o_complete_rob_row [0:2]
 );
     word alu_result [0:2];
     logic alu_valid [0:2];
@@ -21,6 +22,7 @@ module ISSUE(
     always_ff @(posedge i_clk) begin
         for (int i = 0; i < 2; i++) begin
             if (alu_valid[i] && ^alu_valid[i] !== 1'bX) begin
+
                 o_complete_result[i] <= '{
                     ROBNumber: i_issue_inst[i].ROBNumber,
                     RegWrite: i_issue_inst[i].RegWrite,

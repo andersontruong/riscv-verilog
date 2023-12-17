@@ -17,7 +17,6 @@ module DISPATCH(
 
     output rob_row_struct o_rob_rows [0:1] // up to 2 new rows to add to ROB
 );
-    logic fu_counter = 0;
     logic free_p_regs [0:127];
     logic [3:0] ROB_pointer = 0;
     logic mem_issue_state = 0;
@@ -117,16 +116,6 @@ module DISPATCH(
 
                         ROB_pointer = ROB_pointer + 1;
 
-                        // LW
-                        if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 1)
-                            && (i_rename_data[i].MemRead == 1) && (i_rename_data[i].MemWrite == 0))
-                            rows[j].fu <= 2'b10;
-                        // Else SW doesn't need Memory Read
-                        else begin
-                            rows[j].fu = fu_counter;
-                            fu_counter = fu_counter + 1;
-                        end
-
                         break;
                     end
                 end
@@ -151,23 +140,52 @@ module DISPATCH(
 
         // Issue instruction
         // FU 0/1 Instructions
-        for (int i = 0; i < 2; i++) begin
+        foreach (o_issue_inst[i]) begin
             for (int j = 0; j < 16; j++) begin
-                if (rows[j].in_use && rows[j].Src0Ready && rows[j].Src1Ready && i_free_fu[rows[j].fu] && i == rows[j].fu && |rows[j].ALUOp) begin
-                    // $display("Issued %d to DST %d", i, rows[j].PRegAddrDst);
-                    $display("ISSUE Issue %d:", i);
-                    $display("\tSrc0: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc0, rows[j].Src0Ready, rows[j].src0);
-                    $display("\tSrc1: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc1, rows[j].Src1Ready, rows[j].src1);
-                    $display("\tImmediate: %d", rows[j].immediate);
-                    $display("\tDst:  %d", rows[j].PRegAddrDst);
-                    $display("\t\tOldDst:  %d", rows[j].OldPRegAddrDst);
-                    rows[j].in_use <= 1'b0;
+                if (rows[j].in_use && rows[j].Src0Ready && rows[j].Src1Ready && |rows[j].ALUOp) begin
+                    // LW
+                    if ((rows[j].ALUOp == 3'b001) && (rows[j].ALUSrc == 1) && (rows[j].RegWrite == 1)
+                        && (rows[j].MemRead == 1) && (rows[j].MemWrite == 0) && i_free_fu[2]) begin
 
-                    o_issue_inst[i] <= rows[j];
-                    o_free_fu[rows[j].fu] <= 0;
+                        $display("ISSUE Issue %d:", i);
+                        $display("\tSrc0: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc0, rows[j].Src0Ready, rows[j].src0);
+                        $display("\tSrc1: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc1, rows[j].Src1Ready, rows[j].src1);
+                        $display("\tImmediate: %d", rows[j].immediate);
+                        $display("\tDst:  %d", rows[j].PRegAddrDst);
+                        $display("\t\tOldDst:  %d", rows[j].OldPRegAddrDst);
+                        rows[j].in_use = 1'b0;
 
-                    $display("\tFinished Issued %d to DST %d, in-use at %d? %d", i, rows[j].PRegAddrDst, j, rows[j].in_use);
-                    break;
+                        o_issue_inst[i] <= rows[j];
+                        o_issue_inst[i].fu <= 2;
+                        o_free_fu[2] = 0;
+
+                        $display("\tFinished Issued %d to DST %d, in-use at %d? %d", i, rows[j].PRegAddrDst, j, rows[j].in_use);
+                        break;
+                    end
+                        
+                    // Else SW doesn't need Memory Read
+                    else if (i_free_fu[0] | i_free_fu[1]) begin
+                        $display("ISSUE Issue %d:", i);
+                        $display("\tSrc0: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc0, rows[j].Src0Ready, rows[j].src0);
+                        $display("\tSrc1: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc1, rows[j].Src1Ready, rows[j].src1);
+                        $display("\tImmediate: %d", rows[j].immediate);
+                        $display("\tDst:  %d", rows[j].PRegAddrDst);
+                        $display("\t\tOldDst:  %d", rows[j].OldPRegAddrDst);
+                        rows[j].in_use = 1'b0;
+
+                        o_issue_inst[i] <= rows[j];
+                        for (int i = 0; i < 2; i++) begin
+                            if (o_free_fu[i]) begin
+                                o_issue_inst[i] <= rows[j];
+                                o_issue_inst[i].fu <= i;
+                                o_free_fu[i] = 0;
+                                break;
+                            end
+                        end
+                        
+                        $display("\tFinished Issued %d to DST %d, in-use at %d? %d", i, rows[j].PRegAddrDst, j, rows[j].in_use);
+                        break;
+                    end
                 end
                 if (j == 15) begin
                     o_issue_inst[i] <= '{
@@ -190,55 +208,6 @@ module DISPATCH(
                         ROBNumber: 'X
                     };
                 end
-            end
-        end
-
-        // Mem Instruction
-        for (int j = 0; j < 16; j++) begin
-            if (rows[j].in_use && rows[j].Src0Ready && rows[j].Src1Ready && rows[j].fu == 2 && i_free_fu[rows[j].fu] && mem_issue_state == 0) begin
-                // $display("Issued %d to DST %d", i, rows[j].PRegAddrDst);
-                $display("ISSUE Issue %d:", 2);
-                $display("\tSrc0: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc0, rows[j].Src0Ready, rows[j].src0);
-                $display("\tSrc1: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc1, rows[j].Src1Ready, rows[j].src1);
-                $display("\tImmediate: %d", rows[j].immediate);
-                $display("\tDst:  %d", rows[j].PRegAddrDst);
-                $display("\t\tOldDst:  %d", rows[j].OldPRegAddrDst);
-                rows[j].in_use <= 1'b0;
-
-                o_issue_inst[2] <= rows[j];
-                o_free_fu[2] <= 0;
-                if (|rows[j].PRegAddrDst)
-                    free_p_regs[rows[j].PRegAddrDst] <= 0;
-
-                mem_issue_state <= 1;
-
-                $display("\tFinished Issued %d to DST %d, in-use at %d? %d", 2, rows[j].PRegAddrDst, j, rows[j].in_use);
-                break;
-            end
-            else if (j == 15) begin
-                if (mem_issue_state == 0) begin
-                        o_issue_inst[2] <= '{
-                        in_use: 0,
-                        PRegAddrDst: 0,
-                        OldPRegAddrDst: 0,
-                        PRegAddrSrc0: 0,
-                        Src0Ready: 0,
-                        src0: 'X,
-                        PRegAddrSrc1: 0,
-                        Src1Ready: 0,
-                        src1: 'X,
-                        immediate: 0,
-                        ALUOp: 0,
-                        ALUSrc: 0,
-                        RegWrite: 0,
-                        MemRead: 0,
-                        MemWrite: 0,
-                        fu: 0,
-                        ROBNumber: 'X
-                    };
-                end
-                else
-                    mem_issue_state <= 0;
             end
         end
     end

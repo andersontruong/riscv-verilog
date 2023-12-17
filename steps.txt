@@ -23,6 +23,9 @@ C_3:
     Dispatch
         0 addi x20, x0, 6
         1 addi x21, x0, 15
+        RS:
+            0 addi x20, x0, 6
+            1 addi x21, x0, 15
     Rename
         2 addi x1, x2, 36 => addi x22, x20, 36
         3 sw x3, x3, 9    => sw x21, x21, 9
@@ -35,5 +38,36 @@ C_3:
 C_4:
     Issue
         0 addi x20, x0, 6  (FU-0 used)
-        1 addi x21, x0, 15
-    
+        1 addi x21, x0, 15 (FU-1 used)
+    Dispatch
+        0 addi x22, x20, 36
+        1 sw x21, x21, 9
+        RS:
+            0 addi x22, x20, 36
+            1 sw x21, x21, 9
+    Rename
+        4 add x4, x3, x2 => add x23, x21, x20
+        5 add x0, x0, x0 => add x0, x0, x0
+    Decode
+        6 sw x1, x0, 0
+        7 lw x2, 24, x0
+    Fetch
+        8 xor x6, x2, x3
+        9 lw x3, xo, 0
+C_5:
+    Complete
+        0 addi x20, x0, 6  (FU-0 freed, forward)
+        1 addi x21, x0, 15 (FU-1 freed)
+    Issue
+        None
+    Dispatch
+        4 add x23, x21, x20
+        5 add x0, x0, x0
+        RS:
+            0 addi x22, x20, 36
+            1 sw x21, x21, 9
+            4 add x23, x21, x20
+            5 add x0, x0, x0
+    Rename
+        sw x1, x0, 0
+        lw x2, 24, x0
