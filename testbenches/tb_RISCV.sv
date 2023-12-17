@@ -44,8 +44,8 @@ module tb_RISCV;
         .o_rename_data(rename_data)
     );
 
-    p_reg r_reg_addr [0:3];
-    word  r_reg_data [0:3];
+    p_reg r_reg_addr [0:5];
+    word  r_reg_data [0:5];
 
     logic w_reg_en [0:1];
     p_reg w_reg_addr [0:1];
@@ -68,14 +68,14 @@ module tb_RISCV;
 
     register_file reg_file(
         .i_clk(clk),
-        .i_r_addr(r_reg_addr[0:3]),
+        .i_r_addr(r_reg_addr),
         .i_w_en(w_reg_en),
         .i_w_addr(w_reg_addr),
         .i_w_data(w_reg_data),
-        .o_r_data(r_reg_data[0:3])
+        .o_r_data(r_reg_data)
     );
 
-    rs_row_struct rows [0:15];
+    // rs_row_struct rows [0:15];
     rob_row_struct dispatched_rob_rows [0:1];
 
     DISPATCH dispatch(
@@ -90,7 +90,7 @@ module tb_RISCV;
 
         .i_complete_rob_rows(complete_rob_rows),
         
-        .rows(rows),
+        // .rows(rows),
         .o_issue_inst(issue_inst),
         .o_rob_rows(dispatched_rob_rows)
     );
@@ -102,6 +102,12 @@ module tb_RISCV;
     complete_stage_struct complete_result [0:2];
     rob_row_struct retire_rob_rows [0:1];
 
+    always_comb begin
+        foreach (w_mem_data[i]) begin
+            w_mem_data[i] <= r_reg_data[4+i];
+        end
+    end
+
     always_ff @(posedge clk) begin
         foreach (retire_rob_rows[i]) begin
             if (retire_rob_rows[i].valid) begin
@@ -109,7 +115,6 @@ module tb_RISCV;
                 if (retire_rob_rows[i].MemWrite) begin
                     w_mem_addr[i] <= retire_rob_rows[i].data;
                     r_reg_addr[4+i] <= retire_rob_rows[i].PRegAddrDst;
-                    w_mem_data[i] <= r_reg_data[4+i];
                     w_mem_en[i] <= 1;
                 end
                 // Write FUResult to reg
@@ -143,7 +148,7 @@ module tb_RISCV;
         .o_complete_result(complete_result)
     );
 
-    rob_row_struct rob_rows [0:15];
+    // rob_row_struct rob_rows [0:15];
 
     COMPLETE complete(
         .i_clk(clk),
@@ -151,9 +156,8 @@ module tb_RISCV;
         .i_complete_result(complete_result),
         .o_complete_rob_rows(complete_rob_rows),
         .o_retire_rob_rows(retire_rob_rows),
-        .i_fu(w_free_fu),
-        .o_fu_ready(complete_free_fu),
-        .rob_rows(rob_rows)
+        .o_fu_ready(complete_free_fu)
+        // .rob_rows(rob_rows)
     );
 
 endmodule : tb_RISCV

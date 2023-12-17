@@ -43,8 +43,7 @@ module ISSUE(
             end
         end
 
-        if (alu_valid[2] && ^alu_valid[2] !== 1'bX && ^i_r_mem_data !== 1'bX && mem_issue_state == 0) begin
-            mem_issue_state <= 1;
+        if (alu_valid[2] && ^alu_valid[2] !== 1'bX && ^i_r_mem_data !== 1'bX) begin
             o_complete_result[2] <= '{
                 ROBNumber: i_issue_inst[2].ROBNumber,
                 RegWrite: i_issue_inst[2].RegWrite,
@@ -56,7 +55,6 @@ module ISSUE(
             };
         end
         else begin
-            mem_issue_state <= 0;
             o_complete_result[2] <= '{
                 ROBNumber: 'X,
                 RegWrite: 'X,

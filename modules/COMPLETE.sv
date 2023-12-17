@@ -6,13 +6,12 @@ module COMPLETE(
     input  complete_stage_struct i_complete_result [0:2],
     output rob_row_struct o_complete_rob_rows [0:2],
     output rob_row_struct o_retire_rob_rows [0:1],
-    input logic i_fu [0:2],
     output logic o_fu_ready [0:2],
-    output rob_row_struct rob_rows [0:15]
+    // output rob_row_struct rob_rows [0:15]
 );
     // 16 ROB rows
     logic [3:0] ROB_pointer = 0;
-    // rob_row_struct rob_rows [0:15];
+    rob_row_struct rob_rows [0:15];
 
     initial begin
         foreach (rob_rows[i]) begin
