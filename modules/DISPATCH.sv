@@ -181,7 +181,7 @@ module DISPATCH(
                     rows[j].in_use <= 1'b0;
 
                     o_issue_inst[i] <= rows[j];
-                    o_free_fu[rows[j].fu] <= 0;
+                    o_free_fu[i] <= 0;
 
                     $display("\tFinished Issued %d to DST %d, in-use at %d? %d", i, rows[j].PRegAddrDst, j, rows[j].in_use);
                     break;
@@ -206,6 +206,7 @@ module DISPATCH(
                         fu: 0,
                         ROBNumber: 'X
                     };
+                    o_free_fu[i] <= 1;
                 end
             end
         end
@@ -253,6 +254,7 @@ module DISPATCH(
                         fu: 0,
                         ROBNumber: 'X
                     };
+                    o_free_fu[2] <= 1;
                 end
                 else
                     mem_issue_state <= 0;

@@ -30,7 +30,6 @@ module ISSUE(
             else begin
                 forward_issue_result_addr[i] <= 'X;
                 forward_issue_result_data[i] <= 'X;
-                o_fu_ready[i] <= 0;
             end
         end
         if (alu_valid[2] && ^alu_valid[2] !== 1'bX && ^i_r_mem_data !== 1'bX) begin
@@ -41,7 +40,6 @@ module ISSUE(
         else begin
             forward_issue_result_addr[2] <= 'X;
             forward_issue_result_data[2] <= 'X;
-            o_fu_ready[2] <= 0;
         end
     end
 
