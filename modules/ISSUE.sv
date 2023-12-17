@@ -5,6 +5,7 @@ module ISSUE(
     input  rs_row_struct i_issue_inst [0:2],
     input  word i_r_mem_data,
     output word i_r_mem_addr,
+    output logic o_fu_ready [0:2],
     output complete_stage_struct o_complete_result [0:2]
 );
     word alu_result [0:2];
@@ -24,22 +25,22 @@ module ISSUE(
                     ROBNumber: i_issue_inst[i].ROBNumber,
                     RegWrite: i_issue_inst[i].RegWrite,
                     MemWrite: i_issue_inst[i].MemWrite,
-                    MemtoReg: i_issue_inst[i].MemtoReg,
                     ready: 1,
                     fu: i,
                     FU_Result: alu_result[i]
                 };
+                o_fu_ready[i] <= 1;
             end
             else begin
                 o_complete_result[i] <= '{
                     ROBNumber: 'X,
                     RegWrite: 'X,
                     MemWrite: 'X,
-                    MemtoReg: 'X,
                     ready: 'X,
                     fu: 'X,
                     FU_Result: 'X
                 };
+                o_fu_ready[i] <= 0;
             end
         end
 
@@ -48,22 +49,22 @@ module ISSUE(
                 ROBNumber: i_issue_inst[2].ROBNumber,
                 RegWrite: i_issue_inst[2].RegWrite,
                 MemWrite: i_issue_inst[2].MemWrite,
-                MemtoReg: i_issue_inst[2].MemtoReg,
                 ready: 1,
                 fu: 2,
                 FU_Result: i_r_mem_data
             };
+            o_fu_ready[2] <= 1;
         end
         else begin
             o_complete_result[2] <= '{
                 ROBNumber: 'X,
                 RegWrite: 'X,
                 MemWrite: 'X,
-                MemtoReg: 'X,
                 ready: 'X,
                 fu: 'X,
                 FU_Result: 'X
             };
+            o_fu_ready[2] <= 0;
         end
     end
 

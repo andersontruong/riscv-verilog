@@ -24,7 +24,6 @@ module DECODE(
                 o_decode_data[i].RegWrite     <= 0;
                 o_decode_data[i].MemRead      <= 0;
                 o_decode_data[i].MemWrite     <= 0;
-                o_decode_data[i].MemtoReg     <= 0;
             end
             else begin
                 case (i_insts[i][6:0])
@@ -58,7 +57,6 @@ module DECODE(
                             o_decode_data[i].RegWrite     <= 1;
                             o_decode_data[i].MemRead      <= 0;
                             o_decode_data[i].MemWrite     <= 0;
-                            o_decode_data[i].MemtoReg     <= 1;
                         end
 
                     // Handle I-type instruction (non-load)
@@ -86,7 +84,6 @@ module DECODE(
                             o_decode_data[i].RegWrite     <= 1;
                             o_decode_data[i].MemRead      <= 0;
                             o_decode_data[i].MemWrite     <= 0;
-                            o_decode_data[i].MemtoReg     <= 1;
                         end
 
                     // Handle LW instruction
@@ -107,7 +104,6 @@ module DECODE(
                             o_decode_data[i].RegWrite     <= 1;
                             o_decode_data[i].MemRead      <= 1;
                             o_decode_data[i].MemWrite     <= 0;
-                            o_decode_data[i].MemtoReg     <= 0;
                         end
 
                     // Handle SW instruction
@@ -128,7 +124,6 @@ module DECODE(
                             o_decode_data[i].RegWrite     <= 0;
                             o_decode_data[i].MemRead      <= 0;
                             o_decode_data[i].MemWrite     <= 1;
-                            o_decode_data[i].MemtoReg     <= 0;
                         end
 
                     7'b0000000:
@@ -147,7 +142,6 @@ module DECODE(
                             o_decode_data[i].RegWrite     <= 0;
                             o_decode_data[i].MemRead      <= 0;
                             o_decode_data[i].MemWrite     <= 0;
-                            o_decode_data[i].MemtoReg     <= 0;
                         end
                 endcase
             end

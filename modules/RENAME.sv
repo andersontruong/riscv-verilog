@@ -2,7 +2,6 @@ import Types::*;
 
 module RENAME(
     input  logic i_clk,
-    input  p_reg i_free_PRegs [0:1], // Received from Retiring
     input  decode_struct i_decode_data [0:1],
     input rob_row_struct i_complete_rob_rows [0:2],
     output rename_struct o_rename_data [0:1]
@@ -35,7 +34,6 @@ module RENAME(
             o_rename_data[i].RegWrite  <= i_decode_data[i].RegWrite;
             o_rename_data[i].MemRead   <= i_decode_data[i].MemRead;
             o_rename_data[i].MemWrite  <= i_decode_data[i].MemWrite;
-            o_rename_data[i].MemtoReg  <= i_decode_data[i].MemtoReg;
 
             if (i_decode_data[i].ARegAddrSrc0 == 0)
                 o_rename_data[i].PRegAddrSrc0 <= 0;

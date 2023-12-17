@@ -1,0 +1,39 @@
+C_0:
+    Fetch
+        0 addi x2, x0, 6  
+        1 addi x3, x0, 15
+C_1:
+    Decode
+        0 addi x2, x0, 6  
+        1 addi x3, x0, 15
+    Fetch
+        2 addi x1, x2, 36
+        3 sw x3, x3, 9
+C_2:
+    Rename
+        0 addi x2, x0, 6  => addi x20, x0, 6
+        1 addi x3, x0, 15 => addi x21, x0, 15
+    Decode
+        2 addi x1, x2, 36
+        3 sw x3, x3, 9
+    Fetch
+        4 add x4, x3, x2
+        5 add x0, x0, x0
+C_3:
+    Dispatch
+        0 addi x20, x0, 6
+        1 addi x21, x0, 15
+    Rename
+        2 addi x1, x2, 36 => addi x22, x20, 36
+        3 sw x3, x3, 9    => sw x21, x21, 9
+    Decode
+        4 add x4, x3, x2
+        5 add x0, x0, x0
+    Fetch
+        6 sw x1, x0, 0
+        7 lw x2, 24, x0
+C_4:
+    Issue
+        0 addi x20, x0, 6  (FU-0 used)
+        1 addi x21, x0, 15
+    

@@ -87,8 +87,7 @@ module DISPATCH(
                             complete: 0,
                             data: 0,
                             RegWrite: i_rename_data[i].RegWrite,
-                            MemWrite: i_rename_data[i].MemWrite,
-                            MemtoReg: i_rename_data[i].MemtoReg
+                            MemWrite: i_rename_data[i].MemWrite
                         };
 
                         // $display("%d, Reserved at %d to DST %d", i, j, i_rename_data[i].PRegAddrDst);
@@ -114,19 +113,15 @@ module DISPATCH(
                         rows[j].RegWrite <= i_rename_data[i].RegWrite;
                         rows[j].MemRead  <= i_rename_data[i].MemRead;
                         rows[j].MemWrite <= i_rename_data[i].MemWrite;
-                        rows[j].MemtoReg <= i_rename_data[i].MemtoReg;
                         rows[j].ROBNumber = ROB_pointer;
 
                         ROB_pointer = ROB_pointer + 1;
 
                         // LW
                         if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 1)
-                            && (i_rename_data[i].MemRead == 1) && (i_rename_data[i].MemWrite == 0) && (i_rename_data[i].MemtoReg == 0))
+                            && (i_rename_data[i].MemRead == 1) && (i_rename_data[i].MemWrite == 0))
                             rows[j].fu <= 2'b10;
-                        // SW instruction
-                        else if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 0)
-                            && (i_rename_data[i].MemRead == 0) && (i_rename_data[i].MemWrite == 1) && (i_rename_data[i].MemtoReg == 0))
-                            rows[j].fu <= 2'b10;
+                        // Else SW doesn't need Memory Read
                         else begin
                             rows[j].fu = fu_counter;
                             fu_counter = fu_counter + 1;
@@ -145,8 +140,7 @@ module DISPATCH(
                     complete: 0,
                     data: 0,
                     RegWrite: 0,
-                    MemWrite: 0,
-                    MemtoReg: 0
+                    MemWrite: 0
                 };
             end
         end
@@ -167,10 +161,10 @@ module DISPATCH(
                     $display("\tImmediate: %d", rows[j].immediate);
                     $display("\tDst:  %d", rows[j].PRegAddrDst);
                     $display("\t\tOldDst:  %d", rows[j].OldPRegAddrDst);
-                    rows[j].in_use = 1'b0;
+                    rows[j].in_use <= 1'b0;
 
                     o_issue_inst[i] <= rows[j];
-                    o_free_fu[rows[j].fu] = 0;
+                    o_free_fu[rows[j].fu] <= 0;
 
                     $display("\tFinished Issued %d to DST %d, in-use at %d? %d", i, rows[j].PRegAddrDst, j, rows[j].in_use);
                     break;
@@ -192,7 +186,6 @@ module DISPATCH(
                         RegWrite: 0,
                         MemRead: 0,
                         MemWrite: 0,
-                        MemtoReg: 0,
                         fu: 0,
                         ROBNumber: 'X
                     };
@@ -210,10 +203,10 @@ module DISPATCH(
                 $display("\tImmediate: %d", rows[j].immediate);
                 $display("\tDst:  %d", rows[j].PRegAddrDst);
                 $display("\t\tOldDst:  %d", rows[j].OldPRegAddrDst);
-                rows[j].in_use = 1'b0;
+                rows[j].in_use <= 1'b0;
 
                 o_issue_inst[2] <= rows[j];
-                o_free_fu[2] = 0;
+                o_free_fu[2] <= 0;
                 if (|rows[j].PRegAddrDst)
                     free_p_regs[rows[j].PRegAddrDst] <= 0;
 
@@ -240,7 +233,6 @@ module DISPATCH(
                         RegWrite: 0,
                         MemRead: 0,
                         MemWrite: 0,
-                        MemtoReg: 0,
                         fu: 0,
                         ROBNumber: 'X
                     };

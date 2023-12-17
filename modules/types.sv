@@ -22,7 +22,6 @@ package Types;
         logic RegWrite;
         logic MemRead;
         logic MemWrite;
-        logic MemtoReg;
     } decode_struct;
 
     typedef struct {
@@ -43,7 +42,6 @@ package Types;
         logic RegWrite;
         logic MemRead;
         logic MemWrite;
-        logic MemtoReg;
     } rename_struct;
 
     typedef struct {
@@ -66,7 +64,6 @@ package Types;
         word data;
         logic RegWrite;
         logic MemWrite;
-        logic MemtoReg;
     } rob_row_struct;
 
     typedef struct {
@@ -90,7 +87,6 @@ package Types;
         logic RegWrite;
         logic MemRead;
         logic MemWrite;
-        logic MemtoReg;
 
         // 2 bits for 3 functional units
         // 00 FU1
@@ -105,7 +101,6 @@ package Types;
         logic [3:0] ROBNumber;
         logic RegWrite;
         logic MemWrite;
-        logic MemtoReg;
         logic ready;
         logic [1:0] fu;
         word FU_Result;
