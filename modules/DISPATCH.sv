@@ -46,10 +46,6 @@ module DISPATCH(
         foreach(o_free_fu[i])
             o_free_fu[i] <= 1;
     end
-    
-    always_ff @(posedge i_clk) begin
-        
-    end
 
     always_ff @(posedge i_clk) begin
         // Handle Retire Dependencies
@@ -121,9 +117,8 @@ module DISPATCH(
                         ROB_pointer = ROB_pointer + 1;
 
                         // LW
-                        if ((i_rename_data[i].ALUOp == 3'b001) && (i_rename_data[i].ALUSrc == 1) && (i_rename_data[i].RegWrite == 1)
-                            && (i_rename_data[i].MemRead == 1) && (i_rename_data[i].MemWrite == 0))
-                            rows[j].fu <= 2'b10;
+                        if (i_rename_data[i].MemRead == 1)
+                            rows[j].fu = 2'b10;
                         // Else SW doesn't need Memory Read
                         else begin
                             rows[j].fu = fu_counter;
@@ -147,6 +142,25 @@ module DISPATCH(
                 };
             end
         end
+
+        foreach(forward_issue_result_addr[i]) begin
+            if (^forward_issue_result_addr[i] !== 'X) begin
+                $display("FORWARD");
+                foreach(rows[j]) begin
+                    if (rows[j].PRegAddrSrc0 == forward_issue_result_addr[i]) begin
+                        rows[j].src0 = forward_issue_result_data[i];
+                        rows[j].Src0Ready = 1;
+                        
+                    end
+                    if (rows[j].PRegAddrSrc1 == forward_issue_result_addr[i]) begin
+                        rows[j].src1 = forward_issue_result_data[i];
+                        rows[j].Src1Ready = 1;
+                    end
+                    
+                end
+            end
+        end
+
         foreach (o_free_fu[i])
             o_free_fu[i] = i_free_fu[i];
 
@@ -156,7 +170,7 @@ module DISPATCH(
         // FU 0/1 Instructions
         for (int i = 0; i < 2; i++) begin
             for (int j = 0; j < 16; j++) begin
-                if (rows[j].in_use && rows[j].Src0Ready && rows[j].Src1Ready && i_free_fu[rows[j].fu] && i == rows[j].fu && |rows[j].ALUOp) begin
+                if (rows[j].in_use && rows[j].Src0Ready && rows[j].Src1Ready && i_free_fu[i] && i == rows[j].fu && |rows[j].ALUOp) begin
                     // $display("Issued %d to DST %d", i, rows[j].PRegAddrDst);
                     $display("ISSUE Issue %d:", i);
                     $display("\tSrc0: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc0, rows[j].Src0Ready, rows[j].src0);
@@ -198,7 +212,7 @@ module DISPATCH(
 
         // Mem Instruction
         for (int j = 0; j < 16; j++) begin
-            if (rows[j].in_use && rows[j].Src0Ready && rows[j].Src1Ready && rows[j].fu == 2 && i_free_fu[rows[j].fu] && mem_issue_state == 0) begin
+            if (rows[j].in_use && rows[j].Src0Ready && rows[j].Src1Ready && rows[j].fu == 2 && i_free_fu[2] && mem_issue_state == 0) begin
                 // $display("Issued %d to DST %d", i, rows[j].PRegAddrDst);
                 $display("ISSUE Issue %d:", 2);
                 $display("\tSrc0: %d\n\t\tR? %d\n\t\t\tData: %8x", rows[j].PRegAddrSrc0, rows[j].Src0Ready, rows[j].src0);
