@@ -6,9 +6,9 @@ package Types;
     typedef logic [6:0] p_reg;
 
     typedef struct {
+        a_reg ARegAddrDst;
         a_reg ARegAddrSrc0;
         a_reg ARegAddrSrc1;
-        a_reg ARegAddrDst;
         word  immediate;
         // 3 bits for 6 ALU operations
         // 000 NOP
@@ -25,10 +25,10 @@ package Types;
     } decode_struct;
 
     typedef struct {
+        p_reg OldPRegAddrDst;
+        p_reg PRegAddrDst;
         p_reg PRegAddrSrc0;
         p_reg PRegAddrSrc1;
-        p_reg PRegAddrDst;
-        p_reg OldPRegAddrDst;
         word  immediate;
         // 3 bits for 6 ALU operations
         // 000 NOP
@@ -45,17 +45,6 @@ package Types;
     } rename_struct;
 
     typedef struct {
-        word r_addr;
-        word w_addr;
-        word w_data;
-        logic w_en;
-    } memory_request;
-
-    typedef struct {
-        word r_data;
-    } memory_response;
-
-    typedef struct {
         logic [3:0] ROBNumber;
         logic valid;
         p_reg PRegAddrDst;
@@ -67,6 +56,8 @@ package Types;
     } rob_row_struct;
 
     typedef struct {
+        // ROB has 16 rows (can change to have more if needed)
+        logic [3:0] ROBNumber;
         logic in_use;
 
         p_reg PRegAddrDst;
@@ -93,8 +84,6 @@ package Types;
         // 01 FU2
         // 10 FU3 (mem only)
         logic [1:0] fu;
-        // ROB has 16 rows (can change to have more if needed)
-        logic [3:0] ROBNumber;
     } rs_row_struct;
 
     typedef struct {

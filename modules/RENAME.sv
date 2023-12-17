@@ -27,6 +27,19 @@ module RENAME(
     end
 
     always @(posedge i_clk) begin
+        // Free Retired Dst Registers
+        foreach (i_complete_rob_rows[i]) begin
+            if (i_complete_rob_rows[i].valid) begin
+                foreach (free_pool[j]) begin
+                    // Free old register
+                    if (j == i_complete_rob_rows[i].OldPRegAddrDst && |i_complete_rob_rows[i].OldPRegAddrDst) begin
+                        free_pool[j] = 1'b1;
+                        break;
+                    end
+                end
+            end
+        end
+
         foreach (o_rename_data[i]) begin
             o_rename_data[i].immediate <= i_decode_data[i].immediate;
             o_rename_data[i].ALUOp     <= i_decode_data[i].ALUOp;
@@ -70,21 +83,6 @@ module RENAME(
                 $display("\t\tOldDst:  %d", 0);
                 o_rename_data[i].OldPRegAddrDst <= 0;
                 o_rename_data[i].PRegAddrDst <= 0;
-            end
-        end
-    end
-
-    always @(posedge i_clk) begin
-        // Free Retired Dst Registers
-        foreach (i_complete_rob_rows[i]) begin
-            if (i_complete_rob_rows[i].valid) begin
-                foreach (free_pool[j]) begin
-                    // Free old register
-                    if (j == i_complete_rob_rows[i].OldPRegAddrDst && |i_complete_rob_rows[i].OldPRegAddrDst) begin
-                        free_pool[j] = 1'b1;
-                        break;
-                    end
-                end
             end
         end
     end

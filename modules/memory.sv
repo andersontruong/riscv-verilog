@@ -12,6 +12,7 @@ module memory(
 
     // Currently only 8-bit address for bytes
     logic [7:0] memory [0:255];
+    logic state = 0;
 
     initial begin
         i_r_mem_data = 'X;
@@ -23,12 +24,24 @@ module memory(
     end
 
     always @(posedge i_clk) begin
-        i_r_mem_data <= { 
-            memory[i_r_mem_addr[7:0]],
-            memory[i_r_mem_addr[7:0] + 1],
-            memory[i_r_mem_addr[7:0] + 1],
-            memory[i_r_mem_addr[7:0] + 1]
-        };
+        if (state == 0) begin
+            if (i_r_mem_addr) begin
+                i_r_mem_data <= { 
+                    memory[i_r_mem_addr[7:0]],
+                    memory[i_r_mem_addr[7:0] + 1],
+                    memory[i_r_mem_addr[7:0] + 1],
+                    memory[i_r_mem_addr[7:0] + 1]
+                };
+            end
+            else begin
+                i_r_mem_data <= 'X;
+            end
+            state <= 1;
+        end
+        else begin
+            state <= 0;
+            i_r_mem_data <= 'X;
+        end
 
         foreach (i_w_mem_addr[i]) begin
             if (i_w_mem_en[i] && ^i_w_mem_addr[i] !== 'X) begin

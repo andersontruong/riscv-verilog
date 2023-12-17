@@ -23,6 +23,9 @@ C_3:
     Dispatch
         0 addi x20, x0, 6
         1 addi x21, x0, 15
+        RS:
+            0 addi x20, x0, 6
+            1 addi x21, x0, 15
     Rename
         2 addi x1, x2, 36 => addi x22, x20, 36
         3 sw x3, x3, 9    => sw x21, x21, 9
@@ -35,5 +38,165 @@ C_3:
 C_4:
     Issue
         0 addi x20, x0, 6  (FU-0 used)
-        1 addi x21, x0, 15
-    
+        1 addi x21, x0, 15 (FU-1 used)
+    Dispatch
+        2 addi x22, x20, 36
+        3 sw x21, x21, 9
+        RS: 
+            2 addi x22, x20, 36
+            3 sw x21, x21, 9
+    Rename
+        4 add x4, x3, x2 => add x23, x21, x20
+        5 add x0, x0, x0 => add x0, x0, x0
+    Decode:
+        6 sw x1, x0, 0
+        7 lw x2, 24, x0
+    Fetch:
+        8 xor x6, x2, x3
+        9 lw x3, xo, 0
+C_5:
+    Complete
+        0 addi x20, x0, 6  (FU-0 open, forward x20)
+        1 addi x21, x0, 15 (FU-1 open, forward x21)
+    Issue
+        2 addi x22, x20, 36 (FU-0 used, receive forward)
+        3 sw x21, x21, 9    (FU-1 used, receive forward)
+    Dispatch
+        4 add x23, x21, x20 (receive forward)
+        5 add x0, x0, x0
+        RS:
+            4 add x23, x21, x20
+            5 add x0, x0, x0
+    Rename
+        6 sw x1, x0, 0  => sw x22, x0, 0
+        7 lw x2, 24, x0 => lw x24, 24, x0
+    Decode
+        8 xor x6, x2, x3
+        9 lw x3, xo, 0
+    Fetch
+        sub x5, x3, x4
+        sra x7, x2, x9
+C_6:
+    Retire
+        0 addi x20, x0, 6  (Free x2, write to x20)
+        1 addi x21, x0, 15 (Free x3, write to x21)
+    Complete
+        2 addi x22, x20, 36 (FU-0 open, forward x22)
+        3 sw x21, x21, 9    (FU-1 open)
+    Issue
+        4 add x23, x21, x20 (FU-0 used)
+        5 add x0, x0, x0    (FU-1 used)
+    Dispatch
+        6 sw x22, x0, 0
+        7 lw x24, 24, x0
+        RS:
+            6 sw x22, x0, 0
+            7 lw x24, 24, x0
+    Rename
+        8 xor x6, x2, x3 => xor x2, x24, x21
+        9 lw x3, x0, 0   => lw x3, x0, 0
+    Decode
+        10 sub x5, x3, x4
+        11 sra x7, x2, x9
+    Fetch
+        12 andi x9, x3, 23
+        13 sw x5, x7, 1
+C_7:
+    Retire
+        2 addi x22, x20, 36 (Free x1, write to x22)
+        3 sw x21, x21, 9    (Write to x21)
+    Complete
+        4 add x23, x21, x20 (FU-0 open, forward x23)
+        5 add x0, x0, x0    (FU-1 open)
+    Issue
+        6 sw x22, x0, 0     (FU-0 used)
+        7 lw x24, 24, x0    (FU-2 used)
+    Dispatch
+        8 xor x2, x24, x21
+        9 lw x3, x0, 0
+        RS:
+            8 xor x2, x24, x21
+            9 lw x3, x0, 0
+    Rename
+        10 sub x5, x3, x4 => sub x1, x3, x23
+        11 sra x7, x2, x9 => sra x25, x24, x9
+    Decode
+        12 andi x9, x3, 23
+        13 sw x5, x7, 1
+C_8:
+    Retire
+        4 add x23, x21, x20 (Free x4, write to x23)
+        5 add x0, x0, x0
+    Complete
+        6 sw x22, x0, 0     (FU-0 open, forward x22)
+    Issue
+        - 7 lw x24, 24, x0    (FU-2 used, 2nd cycle)
+    Dispatch
+        10 sub x1, x3, x23
+        11 sra x25, x24, x9
+        RS:
+            8 xor x2, x24, x21
+            9 lw x3, x0, 0
+            10 sub x1, x3, x23
+            11 sra x25, x24, x9
+    Rename
+        12 andi x9, x3, 23 => andi x4, x3, 23
+        13 sw x5, x7, 1    => sw x1, x25, 1
+C_9:
+    Retire
+        6 sw x22, x0, 0     (write to memory)
+    Complete
+        7 lw x24, 24, x0    (FU-2 open, forward x24)
+    Issue
+        8 xor x2, x24, x21  (FU-0 used, receive forward)
+        11 sra x25, x24, x9 (FU-1 used, receive forward)
+        9 lw x3, x0, 0      (FU-2 used)
+    Dispatch
+        12 andi x4, x3, 23
+        13 sw x1, x25, 1
+        RS:
+            10 sub x1, x3, x23
+            12 andi x4, x3, 23
+            13 sw x1, x25, 1
+C_10:
+    Retire
+        7 lw x24, 24, x0    (Free x20, write to x24)
+    Complete
+        8 xor x2, x24, x21  (FU-0 open, forward x2)
+        11 sra x25, x24, x9 (FU-1 open, forward x25)
+    Issue
+        - 9 lw x3, x0, 0    (FU-2 used, second cycle)
+    Dispatch
+        RS:
+            10 sub x1, x3, x23
+            12 andi x4, x3, 23
+            13 sw x1, x25, 1
+C_11:
+    Retire
+        8 xor x2, x24, x21  (Free x6, write to x2)
+        11 sra x25, x24, x9 (Free x7, write to x25)
+    Complete
+        9 lw x3, x0, 0    (FU-2 open, forward x3)
+    Issue
+        12 andi x4, x3, 23 (FU-0 used)
+        10 sub x1, x3, x23 (FU-1 used)
+    Dispatch
+        RS:
+            13 sw x1, x25, 1
+C_12:
+    Retire
+        9 lw x3, x0, 0 (Free x21, write to x3)
+    Complete
+        10 sub x1, x3, x23 (FU-0 open, forward x1)
+        12 andi x4, x3, 23 (FU-1 open, forward x4)
+    Issue
+        13 sw x1, x25, 1 (FU-0 used, receive forward)
+C_13:
+    Retire
+        12 andi x4, x3, 23 (Free x9, write to x4)
+        10 sub x1, x3, x23 (Free x5, write to x1)
+    Complete
+        13 sw x1, x25, 1 (FU-0 open)
+C_14:
+    Retire
+        13 sw x1, x25, 1 (write to memory)
