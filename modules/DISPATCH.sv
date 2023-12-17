@@ -12,6 +12,9 @@ module DISPATCH(
 
     input rob_row_struct i_complete_rob_rows [0:2],
 
+    input p_reg forward_issue_result_addr [0:2],
+    input word  forward_issue_result_data [0:2],
+
     // output rs_row_struct rows [0:15],
     output rs_row_struct o_issue_inst [0:2],
 
@@ -20,7 +23,7 @@ module DISPATCH(
     logic fu_counter = 0;
     logic free_p_regs [0:127];
     logic [3:0] ROB_pointer = 0;
-    logic mem_issue_state = 0;
+    logic [1:0] mem_issue_state = 0;
     rs_row_struct rows [0:15];
 
     // Request Register Data
@@ -92,27 +95,27 @@ module DISPATCH(
 
                         // $display("%d, Reserved at %d to DST %d", i, j, i_rename_data[i].PRegAddrDst);
                         rows[j].in_use = 1;
-                        rows[j].PRegAddrDst <= i_rename_data[i].PRegAddrDst;
-                        rows[j].OldPRegAddrDst <= i_rename_data[i].OldPRegAddrDst;
+                        rows[j].PRegAddrDst = i_rename_data[i].PRegAddrDst;
+                        rows[j].OldPRegAddrDst = i_rename_data[i].OldPRegAddrDst;
 
                         if (|i_rename_data[i].PRegAddrDst)
-                            free_p_regs[i_rename_data[i].PRegAddrDst] <= 0;
+                            free_p_regs[i_rename_data[i].PRegAddrDst] = 0;
 
-                        rows[j].PRegAddrSrc0 <= i_rename_data[i].PRegAddrSrc0;
-                        rows[j].Src0Ready <= free_p_regs[i_rename_data[i].PRegAddrSrc0];
-                        rows[j].src0 <= i_r_reg_data[2*i];
+                        rows[j].PRegAddrSrc0 = i_rename_data[i].PRegAddrSrc0;
+                        rows[j].Src0Ready = free_p_regs[i_rename_data[i].PRegAddrSrc0];
+                        rows[j].src0 = i_r_reg_data[2*i];
 
-                        rows[j].PRegAddrSrc1 <= i_rename_data[i].PRegAddrSrc1;
-                        rows[j].Src1Ready <= free_p_regs[i_rename_data[i].PRegAddrSrc1];
-                        rows[j].src1 <= i_r_reg_data[2*i + 1];
+                        rows[j].PRegAddrSrc1 = i_rename_data[i].PRegAddrSrc1;
+                        rows[j].Src1Ready = free_p_regs[i_rename_data[i].PRegAddrSrc1];
+                        rows[j].src1 = i_r_reg_data[2*i + 1];
 
-                        rows[j].immediate <= i_rename_data[i].immediate;
+                        rows[j].immediate = i_rename_data[i].immediate;
 
-                        rows[j].ALUOp    <= i_rename_data[i].ALUOp;
-                        rows[j].ALUSrc   <= i_rename_data[i].ALUSrc;
-                        rows[j].RegWrite <= i_rename_data[i].RegWrite;
-                        rows[j].MemRead  <= i_rename_data[i].MemRead;
-                        rows[j].MemWrite <= i_rename_data[i].MemWrite;
+                        rows[j].ALUOp    = i_rename_data[i].ALUOp;
+                        rows[j].ALUSrc   = i_rename_data[i].ALUSrc;
+                        rows[j].RegWrite = i_rename_data[i].RegWrite;
+                        rows[j].MemRead  = i_rename_data[i].MemRead;
+                        rows[j].MemWrite = i_rename_data[i].MemWrite;
                         rows[j].ROBNumber = ROB_pointer;
 
                         ROB_pointer = ROB_pointer + 1;
@@ -132,7 +135,7 @@ module DISPATCH(
                 end
             end
             else begin
-                o_rob_rows[i] <= '{
+                o_rob_rows[i] = '{
                     ROBNumber: 'X,
                     valid: 0,
                     PRegAddrDst: 0,

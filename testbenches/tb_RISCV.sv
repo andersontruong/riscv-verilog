@@ -107,6 +107,9 @@ module tb_RISCV;
         .o_r_data(r_reg_data)
     );
 
+    p_reg forward_issue_result_addr [0:2];
+    word  forward_issue_result_data [0:2];
+
     DISPATCH dispatch(
         .i_clk(clk),
         .i_rename_data(rename_data),
@@ -118,6 +121,8 @@ module tb_RISCV;
         .o_free_fu(dispatch_free_fu),
 
         .i_complete_rob_rows(complete_rob_rows),
+        .forward_issue_result_addr(forward_issue_result_addr),
+        .forward_issue_result_data(forward_issue_result_data),
         
         .o_issue_inst(issue_inst),
         .o_rob_rows(dispatched_rob_rows)
@@ -138,6 +143,8 @@ module tb_RISCV;
         .i_r_mem_data(r_mem_data),
         .i_r_mem_addr(r_mem_addr),
         .o_complete_result(complete_result),
+        .forward_issue_result_addr(forward_issue_result_addr),
+        .forward_issue_result_data(forward_issue_result_data),
         .o_fu_ready(complete_free_fu)
     );
 

@@ -6,6 +6,8 @@ module ISSUE(
     input  word i_r_mem_data,
     output word i_r_mem_addr,
     output logic o_fu_ready [0:2],
+    output p_reg forward_issue_result_addr [0:2],
+    output word  forward_issue_result_data [0:2],
     output complete_stage_struct o_complete_result [0:2]
 );
     word alu_result [0:2];
@@ -16,6 +18,31 @@ module ISSUE(
         foreach (o_complete_result[i])
             o_complete_result[i].ready <= 0;
         i_r_mem_addr = 'X;
+    end
+
+    always_comb begin
+        for (int i = 0; i < 2; i++) begin
+            if (alu_valid[i] && ^alu_valid[i] !== 1'bX) begin
+                forward_issue_result_addr[i] <= i_issue_inst[i].PRegAddrDst;
+                forward_issue_result_data[i] <= alu_result[i];
+                o_fu_ready[i] <= 1;
+            end
+            else begin
+                forward_issue_result_addr[i] <= 'X;
+                forward_issue_result_data[i] <= 'X;
+                o_fu_ready[i] <= 0;
+            end
+        end
+        if (alu_valid[2] && ^alu_valid[2] !== 1'bX && ^i_r_mem_data !== 1'bX) begin
+            forward_issue_result_addr[2] <= i_issue_inst[2].PRegAddrDst;
+            forward_issue_result_data[2] <= alu_result[2];
+            o_fu_ready[2] <= 1;
+        end
+        else begin
+            forward_issue_result_addr[2] <= 'X;
+            forward_issue_result_data[2] <= 'X;
+            o_fu_ready[2] <= 0;
+        end
     end
 
     always_ff @(posedge i_clk) begin

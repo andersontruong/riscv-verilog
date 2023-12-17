@@ -18,16 +18,7 @@ module COMPLETE(
         end
     end
 
-    // Create ROB Entry if Valid Request and Empty Row
-    always_ff @(posedge i_clk) begin
-        foreach (i_rob_row[i]) begin
-            $display("TRY ROB ISSUE %d: at %d; valid i=%d, valid spot=", i, i_rob_row[i].ROBNumber, i_rob_row[i].valid, rob_rows[i_rob_row[i].ROBNumber].valid);
-            if (i_rob_row[i].valid && !rob_rows[i_rob_row[i].ROBNumber].valid) begin
-                $display("ROB Issue %d: at %d", i, i_rob_row[i].ROBNumber);
-                rob_rows[i_rob_row[i].ROBNumber] <= i_rob_row[i];
-            end
-        end
-
+    always_comb begin
         foreach(i_complete_result[i]) begin
             if (i_complete_result[i].ready) begin
                 $display("COMPLETE Issue %d:", i);
@@ -42,6 +33,17 @@ module COMPLETE(
                 rob_rows[i_complete_result[i].ROBNumber].complete <= 0;
                 rob_rows[i_complete_result[i].ROBNumber].data <= 'X;
                 o_complete_rob_rows[i].valid <= 0;
+            end
+        end
+    end
+
+    // Create ROB Entry if Valid Request and Empty Row
+    always_ff @(posedge i_clk) begin
+        foreach (i_rob_row[i]) begin
+            $display("TRY ROB ISSUE %d: at %d; valid i=%d, valid spot=", i, i_rob_row[i].ROBNumber, i_rob_row[i].valid, rob_rows[i_rob_row[i].ROBNumber].valid);
+            if (i_rob_row[i].valid && !rob_rows[i_rob_row[i].ROBNumber].valid) begin
+                $display("ROB Issue %d: at %d", i, i_rob_row[i].ROBNumber);
+                rob_rows[i_rob_row[i].ROBNumber] <= i_rob_row[i];
             end
         end
 
