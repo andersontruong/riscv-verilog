@@ -2,11 +2,11 @@ import Types::*;
 
 module register_file(
     input  logic i_clk,
-    input  p_reg i_r_addr [0:3],
+    input  p_reg i_r_addr [0:5],
     input  logic i_w_en [0:1],
     input  p_reg i_w_addr [0:1],
     input  word  i_w_data [0:1],
-    output word  o_r_data [0:3]
+    output word  o_r_data [0:5]
 );
     word reg_array[0:127];
 
@@ -14,7 +14,7 @@ module register_file(
 
     initial begin
         foreach(reg_array[i])
-            reg_array[i] <= i;
+            reg_array[i] <= 0;
     end
 
     always_comb begin

@@ -7,6 +7,7 @@ module INSTRUCTION_ROM(
 );
     integer data_file, scan_file;
     integer out = 0;
+    word insts [0:1];
 
     initial begin
         #1;
@@ -15,18 +16,21 @@ module INSTRUCTION_ROM(
         else $display("File not opened : %0d", data_file);
     end
 
+    assign o_insts = insts;
+
     always @(posedge i_clk) begin
-        foreach (o_insts[i]) begin
-            if (out != -1) begin
-                out <= $fscanf(data_file, "%2x\n", o_insts[i][31:24]);
-                out <= $fscanf(data_file, "%2x\n", o_insts[i][23:16]);
-                out <= $fscanf(data_file, "%2x\n", o_insts[i][15:8]);
-                out <= $fscanf(data_file, "%2x\n", o_insts[i][7:0]);
-                $display("FETCH Issue %i: %8x", i, o_insts[i]);
+        foreach (insts[i]) begin
+            if (!$feof(data_file)) begin
+                out <= $fscanf(data_file, "%2x", insts[i][31:24]);
+                out <= $fscanf(data_file, "%2x", insts[i][23:16]);
+                out <= $fscanf(data_file, "%2x", insts[i][15:8]);
+                out <= $fscanf(data_file, "%2x", insts[i][7:0]);
+                $display("FETCH Issue %i: %8x, out=%d", i, insts[i], out);
             end
             // Set NOP when EOF
             else begin
-                o_insts[i] <= 0;
+                $display("EOF");
+                insts[i] <= 0;
             end
         end
     end

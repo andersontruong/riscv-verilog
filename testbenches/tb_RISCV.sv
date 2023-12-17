@@ -14,12 +14,12 @@ module tb_RISCV;
         clk <= 0;
         foreach (free_pregs[i])
             free_pregs[i] = 0;
-        #50;
+        #100;
         $stop;
     end
 
     always begin
-        #1 clk <= ~clk;
+        #0.5 clk <= ~clk;
     end
     
     INSTRUCTION_ROM inst_rom(
@@ -34,10 +34,13 @@ module tb_RISCV;
         .o_decode_data(decode_data)
     );
 
+    rob_row_struct complete_rob_rows [0:2];
+
     RENAME rename(
         .i_clk(clk),
         .i_free_PRegs(free_pregs),
         .i_decode_data(decode_data),
+        .i_complete_rob_rows(complete_rob_rows),
         .o_rename_data(rename_data)
     );
 
@@ -48,63 +51,109 @@ module tb_RISCV;
     p_reg w_reg_addr [0:1];
     word  w_reg_data [0:1];
 
-    logic i_free_fu [0:2];
-    logic o_free_fu [0:2];
+    logic w_free_fu [0:2];
+    logic dispatch_free_fu [0:2];
+    logic complete_free_fu [0:2];
 
-    assign i_free_fu = o_free_fu;
+    always_comb begin
+        foreach (w_free_fu[i]) begin
+            if (^complete_free_fu[i] === 1'bX)
+                w_free_fu[i] <= dispatch_free_fu[i];
+            else
+                w_free_fu[i] <= dispatch_free_fu[i] | complete_free_fu[i];
+        end
+    end
 
     rs_row_struct issue_inst [0:2];
 
     register_file reg_file(
         .i_clk(clk),
-        .i_r_addr(r_reg_addr),
+        .i_r_addr(r_reg_addr[0:3]),
         .i_w_en(w_reg_en),
         .i_w_addr(w_reg_addr),
         .i_w_data(w_reg_data),
-        .o_r_data(r_reg_data)
+        .o_r_data(r_reg_data[0:3])
     );
 
     rs_row_struct rows [0:15];
-    rob_row_struct rob_rows [0:1];
+    rob_row_struct dispatched_rob_rows [0:1];
 
     DISPATCH dispatch(
         .i_clk(clk),
         .i_rename_data(rename_data),
 
-        .i_r_reg_data(r_reg_data),
-        .o_r_reg_addr(r_reg_addr),
+        .i_r_reg_data(r_reg_data[0:3]),
+        .o_r_reg_addr(r_reg_addr[0:3]),
 
-        .i_free_fu(i_free_fu),
-        .o_free_fu(o_free_fu),
+        .i_free_fu(w_free_fu),
+        .o_free_fu(dispatch_free_fu),
+
+        .i_complete_rob_rows(complete_rob_rows),
         
         .rows(rows),
         .o_issue_inst(issue_inst),
-        .o_rob_rows(rob_rows)
+        .o_rob_rows(dispatched_rob_rows)
     );
 
-    // word r_mem_data, r_mem_addr;
-    // complete_stage_struct complete_result [0:2];
+    word r_mem_data, r_mem_addr;
+    word w_mem_addr [0:1];
+    word w_mem_data [0:1];
+    logic w_mem_en [0:1];
+    complete_stage_struct complete_result [0:2];
+    rob_row_struct retire_rob_rows [0:1];
 
-    // memory mem(
-    //     .i_clk(clk),
-    //     .i_r_mem_addr(r_mem_addr),
-    //     .i_r_mem_data(r_mem_data)
-    // );
+    always_ff @(posedge clk) begin
+        foreach (retire_rob_rows[i]) begin
+            if (retire_rob_rows[i].valid) begin
+                // Store from reg to mem
+                if (retire_rob_rows[i].MemWrite) begin
+                    w_mem_addr[i] <= retire_rob_rows[i].data;
+                    r_reg_addr[4+i] <= retire_rob_rows[i].PRegAddrDst;
+                    w_mem_data[i] <= r_reg_data[4+i];
+                    w_mem_en[i] <= 1;
+                end
+                // Write FUResult to reg
+                else if (retire_rob_rows[i].RegWrite) begin
+                    w_reg_addr[i] <= retire_rob_rows[i].PRegAddrDst;
+                    w_reg_data[i] <= retire_rob_rows[i].data;
+                    w_reg_en[i] <= 1;
+                end
+            end
+            else begin
+                w_mem_en[i] <= 0;
+                w_reg_en[i] <= 0;
+            end
+        end
+    end
 
-    // ISSUE issue(
-    //     .i_clk(clk),
-    //     .i_issue_inst(issue_inst),
-    //     .i_r_mem_data(r_mem_data),
-    //     .i_r_mem_addr(r_mem_addr),
-    //     .o_complete_result(complete_result)
-    // );
+    memory mem(
+        .i_clk(clk),
+        .i_r_mem_addr(r_mem_addr),
+        .i_r_mem_data(r_mem_data),
+        .i_w_mem_addr(w_mem_addr),
+        .i_w_mem_data(w_mem_data),
+        .i_w_mem_en(w_mem_en)
+    );
 
-    // COMPLETE complete(
-    //     .i_clk(clk),
-    //     input  rob_row_struct i_rob_row [0:1],
-    //     input  complete_stage_struct i_complete_result [0:2],
-    //     output rob_row_struct o_retire_row [0:1],
-    //     output logic [0:1] fu_ready [0:2]
-    // );
+    ISSUE issue(
+        .i_clk(clk),
+        .i_issue_inst(issue_inst),
+        .i_r_mem_data(r_mem_data),
+        .i_r_mem_addr(r_mem_addr),
+        .o_complete_result(complete_result)
+    );
+
+    rob_row_struct rob_rows [0:15];
+
+    COMPLETE complete(
+        .i_clk(clk),
+        .i_rob_row(dispatched_rob_rows),
+        .i_complete_result(complete_result),
+        .o_complete_rob_rows(complete_rob_rows),
+        .o_retire_rob_rows(retire_rob_rows),
+        .i_fu(w_free_fu),
+        .o_fu_ready(complete_free_fu),
+        .rob_rows(rob_rows)
+    );
 
 endmodule : tb_RISCV

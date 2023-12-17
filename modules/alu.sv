@@ -26,7 +26,7 @@ module alu(
             3'b101:
                 o_result <= i_operand0 >>> i_operand1;
             default:
-                o_result <= 0;
+                o_result <= 'X;
         endcase
     end
 

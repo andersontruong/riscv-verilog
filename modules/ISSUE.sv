@@ -9,34 +9,63 @@ module ISSUE(
 );
     word alu_result [0:2];
     logic alu_valid [0:2];
+    logic mem_issue_state = 0;
 
     initial begin
         foreach (o_complete_result[i])
             o_complete_result[i].ready <= 0;
+        i_r_mem_addr = 'X;
     end
 
     always_ff @(posedge i_clk) begin
         for (int i = 0; i < 2; i++) begin
-            if (alu_valid[i]) begin
-                o_complete_result[i].ready <= 1;
-                o_complete_result[i].FU_Result <= alu_result[i];
-                o_complete_result[i].fu <= i;
+            if (alu_valid[i] && ^alu_valid[i] !== 1'bX) begin
+                o_complete_result[i] <= '{
+                    ROBNumber: i_issue_inst[i].ROBNumber,
+                    RegWrite: i_issue_inst[i].RegWrite,
+                    MemWrite: i_issue_inst[i].MemWrite,
+                    MemtoReg: i_issue_inst[i].MemtoReg,
+                    ready: 1,
+                    fu: i,
+                    FU_Result: alu_result[i]
+                };
             end
             else begin
-                o_complete_result[i].ready <= 0;
-                o_complete_result[i].FU_Result <= 0;
-                o_complete_result[i].fu <= 'X;
+                o_complete_result[i] <= '{
+                    ROBNumber: 'X,
+                    RegWrite: 'X,
+                    MemWrite: 'X,
+                    MemtoReg: 'X,
+                    ready: 'X,
+                    fu: 'X,
+                    FU_Result: 'X
+                };
             end
         end
-        if (alu_valid[2] && ^i_r_mem_data !== 1'bX) begin
-            o_complete_result[2].ready <= 1;
-            o_complete_result[2].FU_Result <= i_r_mem_data;
-            o_complete_result[i].fu <= 2;
+
+        if (alu_valid[2] && ^alu_valid[2] !== 1'bX && ^i_r_mem_data !== 1'bX && mem_issue_state == 0) begin
+            mem_issue_state <= 1;
+            o_complete_result[2] <= '{
+                ROBNumber: i_issue_inst[2].ROBNumber,
+                RegWrite: i_issue_inst[2].RegWrite,
+                MemWrite: i_issue_inst[2].MemWrite,
+                MemtoReg: i_issue_inst[2].MemtoReg,
+                ready: 1,
+                fu: 2,
+                FU_Result: i_r_mem_data
+            };
         end
         else begin
-            o_complete_result[2].ready <= 0;
-            o_complete_result[2].FU_Result <= 0;
-            o_complete_result[i].fu <= 'X;
+            mem_issue_state <= 0;
+            o_complete_result[2] <= '{
+                ROBNumber: 'X,
+                RegWrite: 'X,
+                MemWrite: 'X,
+                MemtoReg: 'X,
+                ready: 'X,
+                fu: 'X,
+                FU_Result: 'X
+            };
         end
     end
 
